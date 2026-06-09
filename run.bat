@@ -1,0 +1,6 @@
+@echo off
+echo Initialisation de la base de données...
+python init_db.py
+echo Lancement de l'application FPV Tunisia...
+streamlit run app.py
+pause
