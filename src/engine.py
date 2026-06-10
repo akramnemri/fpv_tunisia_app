@@ -64,17 +64,18 @@ def compute_project(dam: DamProfile, const: EconomicConstants, inputs: ProjectIn
             retained_power = DEFAULT_POWER_MWC
             max_power = DEFAULT_POWER_MWC
         else:
-            max_power = np.floor(inputs.budget / dam.cost_per_mwc * 10) / 10
+            budget_val = inputs.budget if inputs.budget and inputs.budget > 0 else 0
+            max_power = np.floor(budget_val / CAPEX_PER_MWC * 10) / 10
 
             if inputs.desired_power is None or inputs.desired_power == 0:
-                retained_power = max_power
+                retained_power = max(0, max_power)
             else:
-                retained_power = min(inputs.desired_power, max_power)
+                retained_power = max(0, min(inputs.desired_power, max_power))
 
     # ------------------------------------------------------------------
     # 2. CAPEX  (relation linéaire fixe : 2 300 000 TND/MWc)
     # ------------------------------------------------------------------
-    capex = dam.cost_per_mwc * retained_power
+    capex = CAPEX_PER_MWC * retained_power
 
     # ------------------------------------------------------------------
     # 3. Production

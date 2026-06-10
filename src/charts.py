@@ -12,10 +12,10 @@ from typing import List
 
 # Palette couleurs priorité (cohérente avec _score_color dans config.py)
 _COLOR_MAP = {
-    "🔴": "#e74c3c",
-    "🟠": "#e67e22",
-    "🟡": "#f1c40f",
-    "🟢": "#2ecc71",
+    "red": "#e74c3c",
+    "orange": "#e67e22",
+    "yellow": "#f1c40f",
+    "green": "#2ecc71",
 }
 
 
@@ -119,8 +119,16 @@ def ranking_chart(scores_df: pd.DataFrame) -> go.Figure:
         Colonnes attendues : 'Barrage', 'Score',
         'Production (GWh/an)', 'Eau (m³/an)', 'Gain aquatique (%)'.
     """
-    # Extraire la couleur depuis la colonne 'Rang' ("🔴 #1" → "🔴")
-    emoji_colors = scores_df['Rang'].str.extract(r'([\U0001F7E0-\U0001F7E5🔴🟠🟡🟢])')[0]
+    # Extraire la couleur depuis la colonne 'Rang' ("red #1" → "red" ou "🔴 #1" → "🔴")
+    # Handle both text and emoji color formats
+    def extract_color(rang_str):
+        if rang_str in ["red", "orange", "yellow", "green"]:
+            return rang_str
+        import re
+        match = re.match(r'([🔴🟠🟡🟢]|red|orange|yellow|green)\s*#', rang_str)
+        return match.group(1) if match else "green"
+    
+    emoji_colors = scores_df['Rang'].apply(extract_color)
     bar_colors = [_COLOR_MAP.get(e, '#95a5a6') for e in emoji_colors]
 
     fig = go.Figure()
