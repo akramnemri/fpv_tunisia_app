@@ -28,14 +28,28 @@ def render(results: ProjectResults):
 
     st.divider()
 
-    # --- CO2 ---
-    c1, c2, c3 = st.columns(3)
-    c1.metric("CO₂ évité", f"{results.co2_avoided:.1f} t/an")
-    c2.metric("CO₂ émis (FPV)", f"{results.co2_emitted:.1f} t/an")
-    c3.metric("Bilan net CO₂", f"{results.co2_net:.1f} t/an")
+    # --- Aquatic Gain ---
+    st.subheader("💧 Gain aquatique (flottant vs terrestre)")
+    col_a, col_b = st.columns(2)
+    col_a.metric("Gain de production annuel", f"{results.aquatic_gain_kwh:,.0f} kWh")
+    col_b.metric("Gain relatif", f"{results.aquatic_gain_percent:.2f} %")
 
     st.divider()
+    # --- Environment ---
+    st.subheader("🌍 Bénéfices environnementaux annuels")
+    from src.charts import equivalences_chart
+    if results.equivalences:
+        fig_eq = equivalences_chart(
+            trees=results.equivalences.trees_planted,
+            cars=results.equivalences.cars_removed,
+            pools=results.equivalences.olympic_pools,
+            co2_t=results.equivalences.co2_avoided_tonnes,
+            water_m3=results.water_saved_m3,
+            dam_name="projet"
+        )
+        st.plotly_chart(fig_eq, width='stretch')
 
+    st.divider()
     # --- Cash-flows ---
     st.subheader("📉 Cash-flows sur 25 ans")
     fig = cashflow_chart(results.years, results.cash_flows)

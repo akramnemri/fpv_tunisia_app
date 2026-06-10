@@ -229,6 +229,26 @@ def run_all_tests():
         print(f"  FAIL: {e}")
         failed += 1
 
+    # -- TEST 10: Ranking Tab ---
+    print_test("TEST 10: Ranking Tab")
+    try:
+        from src.config import compute_dam_scores, scores_to_dataframe
+        
+        scores = compute_dam_scores(conn, power_mwc=20.0)
+        assert_true(len(scores) == 5, f"5 scores computed: {len(scores)}")
+        assert_true(scores[0].rank == 1, f"Top rank: {scores[0].rank}")
+        assert_true(scores[0].score >= scores[-1].score, "Scores sorted descending")
+        
+        df = scores_to_dataframe(scores)
+        assert_true('Rang' in df.columns, "Rang column exists")
+        assert_true('Score' in df.columns, "Score column exists")
+        assert_true('Gain aquatique (%)' in df.columns, "Aquatic gain column exists")
+        
+        passed += 1
+    except Exception as e:
+        print(f"  FAIL: {e}")
+        failed += 1
+
     # ---
     print_header("RESULTS SUMMARY")
     print(f"  Passed: {passed}")

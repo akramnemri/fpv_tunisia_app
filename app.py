@@ -8,7 +8,7 @@ from src.config import get_connection, load_constants, load_dams
 from src.models import DamProfile, EconomicConstants, ProjectInputs
 from src.engine import compute_project
 
-from src.tabs import simulation_tab, evaporation_tab, thermal_tab, scenarios_tab, comparison_tab
+from src.tabs import simulation_tab, evaporation_tab, thermal_tab, scenarios_tab, comparison_tab, ranking_tab
 
 st.set_page_config(
     page_title="FPV Tunisia — Outil d'aide à la décision",
@@ -104,12 +104,13 @@ inputs = ProjectInputs(
 # ───────────────────────────────────────────
 # MAIN TABS
 # ───────────────────────────────────────────
-tab_sim, tab_evap, tab_therm, tab_scen, tab_comp = st.tabs([
+tab_sim, tab_evap, tab_therm, tab_scen, tab_comp, tab_rank = st.tabs([
     "📊 Simulation",
     "📈 Évaporation mensuelle",
     "🌡️ Performance thermique",
     "💵 Scénarios économiques",
     "🔍 Comparaison multi-barrages",
+    "🏆 Classement prioritaire"
 ])
 
 # ─── TAB 1: Simulation ─────────────────────
@@ -154,6 +155,10 @@ with tab_scen:
 # ─── TAB 5: Comparison ─────────────────────
 with tab_comp:
     comparison_tab.render(dams_list, const, inputs)
+
+# ─── TAB 6: Ranking ───────────────────────
+with tab_rank:
+    ranking_tab.render(conn)
 
 # ─── Footer ────────────────────────────────
 st.sidebar.divider()

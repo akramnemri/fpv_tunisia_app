@@ -99,6 +99,7 @@ fpv_tunisia_app/
         ├── thermal_tab.py
         ├── scenarios_tab.py
         └── comparison_tab.py
+         └── ranking_tab.py
 ```
 
 ## Database Schema
@@ -122,7 +123,8 @@ The application follows a modular architecture:
 ## Technical Details
 
 ### Economic Parameters
-- Initial tariff: 0.285 TND/kWh
+- Initial tariff: 0.307 TND/kWh (STEG 2025)
+- CAPEX unitaire fixe: 2,300,000 TND/MWc
 - Annual degradation: 0.4%
 - OPEX rate: 2%
 - Discount rate: 10%
