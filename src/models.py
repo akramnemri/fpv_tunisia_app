@@ -10,6 +10,7 @@ class ProjectInputs:
     objective: str  # "Production", "Économie d'eau", "Mixte"
     loan_rate: float
     loan_share: float
+    mode: str = "budget"  # "budget" ou "power"
 
 @dataclass
 class DamProfile:
@@ -64,3 +65,5 @@ class ProjectResults:
     tri: float
     roi: float
     payback: Optional[int]
+    aquatic_gain_percent: float = 0.0
+    aquatic_gain_kwh: float = 0.0

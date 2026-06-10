@@ -5,6 +5,27 @@ from src.models import DamProfile, EconomicConstants, ProjectInputs
 from src.engine import compute_project
 from src.charts import production_comparison_chart, water_comparison_chart
 
+def compute_score(res, dam, inputs):
+    """Calcule un score sur 100 basé sur production, eau et VAN."""
+    prod_score = min(res.production_gwh / 40.0, 1.0) * 40
+    water_score = min(res.water_saved_m3 / 150000.0, 1.0) * 30
+    van_score = min(res.van / 100e6, 1.0) * 30
+    total = prod_score + water_score + van_score
+    
+    if total >= 80:
+        color = "blue"
+    elif total >= 60:
+        color = "green"
+    elif total >= 40:
+        color = "yellow"
+    elif total >= 20:
+        color = "orange"
+    else:
+        color = "red"
+    
+    return total, color
+
+
 def render(dams_list: list, const: EconomicConstants, inputs: ProjectInputs):
     st.subheader("🔍 Comparaison des 5 barrages avec votre budget")
 

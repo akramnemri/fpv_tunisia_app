@@ -6,6 +6,7 @@ from src.charts import scenario_comparison_chart
 def render(conn):
     st.subheader("💵 Scénarios d'indexation des tarifs")
     st.markdown("Comparaison des hypothèses d'évolution du prix de vente (2%, 5%, 8% d'indexation annuelle)")
+    st.info("💡 Prix de vente initial : **0,307 TND/kWh** (tarif STEG 2025)")
 
     scenarios_df = load_scenarios(conn)
 

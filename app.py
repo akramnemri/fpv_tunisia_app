@@ -43,14 +43,40 @@ st.sidebar.header("🎛️ Paramètres du projet")
 dam_names = ["Tous (comparaison)"] + dams_df['name'].tolist()
 selected_dam = st.sidebar.selectbox("Sélectionner un barrage", dam_names)
 
-budget = st.sidebar.number_input(
-    "Budget (TND)", min_value=0, value=50_000_000, step=1_000_000, format="%d"
+# --- Mode inversible : Budget ⇄ Puissance ---
+st.sidebar.divider()
+st.sidebar.subheader("⚙️ Mode de calcul")
+
+mode = st.sidebar.radio(
+    "Choisir le mode",
+    ["💰 Budget → Puissance", "⚡ Puissance → Budget"],
+    index=0,
+    help="En mode 'Budget', vous entrez un budget et l'application calcule la puissance maximale. En mode 'Puissance', vous entrez une puissance souhaitée et l'application calcule le budget nécessaire."
 )
 
-desired_power_raw = st.sidebar.number_input(
-    "Puissance souhaitée (MWc) — optionnel", min_value=0.0, value=0.0, step=1.0, format="%.1f"
-)
-desired_power = None if desired_power_raw == 0 else desired_power_raw
+# Valeurs par défaut : 20 MWc
+DEFAULT_POWER = 20.0
+DEFAULT_BUDGET = int(DEFAULT_POWER * 2_300_000)  # 46,000,000 TND
+
+if mode == "💰 Budget → Puissance":
+    inputs_mode = "budget"
+    budget = st.sidebar.number_input(
+        "Budget (TND)", min_value=0, value=DEFAULT_BUDGET, step=1_000_000, format="%d"
+    )
+    desired_power_raw = st.sidebar.number_input(
+        "Puissance souhaitée (MWc) — optionnel", min_value=0.0, value=0.0, step=1.0, format="%.1f"
+    )
+    desired_power = None if desired_power_raw == 0 else desired_power_raw
+else:
+    inputs_mode = "power"
+    desired_power_raw = st.sidebar.number_input(
+        "Puissance souhaitée (MWc)", min_value=0.1, value=DEFAULT_POWER, step=1.0, format="%.1f"
+    )
+    desired_power = desired_power_raw
+    # Calcul du budget nécessaire pour info
+    required_budget = int(desired_power * 2_300_000)
+    st.sidebar.info(f"💡 Budget nécessaire : **{required_budget:,.0f} TND**")
+    budget = required_budget  # Utilisé pour compatibilité
 
 objective = st.sidebar.selectbox(
     "Objectif prioritaire", ["Production", "Économie d'eau", "Mixte"]
@@ -72,6 +98,7 @@ inputs = ProjectInputs(
     objective=objective,
     loan_rate=loan_rate,
     loan_share=loan_share,
+    mode=inputs_mode,
 )
 
 # ───────────────────────────────────────────
@@ -130,4 +157,4 @@ with tab_comp:
 
 # ─── Footer ────────────────────────────────
 st.sidebar.divider()
-st.sidebar.caption("FPV Tunisia v2.0 — Architecture modulaire | Juin 2026")
+st.sidebar.caption("FPV Tunisia v2.1 — Mode inversible | Prix STEG 2025 | Juin 2026")

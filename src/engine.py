@@ -7,13 +7,21 @@ from src.models import DamProfile, EconomicConstants, ProjectResults, ProjectInp
 def compute_project(dam: DamProfile, const: EconomicConstants, inputs: ProjectInputs) -> ProjectResults:
     """Calcule tous les indicateurs pour un barrage donné et des paramètres utilisateur."""
 
-    # --- Puissance ---
-    max_power = np.floor(inputs.budget / dam.cost_per_mwc * 10) / 10
-
-    if inputs.desired_power is None or inputs.desired_power == 0:
-        retained_power = max_power
+    # --- Mode inverse (power -> budget) ---
+    if inputs.mode == "power" and inputs.desired_power and inputs.desired_power > 0:
+        retained_power = inputs.desired_power
+        max_power = retained_power
     else:
-        retained_power = min(inputs.desired_power, max_power)
+        # --- Puissance ---
+        max_power = np.floor(inputs.budget / dam.cost_per_mwc * 10) / 10
+
+        if inputs.desired_power is None or inputs.desired_power == 0:
+            retained_power = max_power
+        else:
+            retained_power = min(inputs.desired_power, max_power)
+
+    # --- CAPEX (needed for both modes) ---
+    capex = dam.cost_per_mwc * retained_power
 
     # --- Production ---
     production_y1 = retained_power * 1000 * dam.productible
@@ -30,8 +38,13 @@ def compute_project(dam: DamProfile, const: EconomicConstants, inputs: ProjectIn
     alert = "✅ Seuil respecté" if alert_ok else dam.alert_text
 
     # --- CAPEX / OPEX ---
-    capex = dam.cost_per_mwc * retained_power
     opex = capex * const.J4
+
+    # --- Aquatic gain ---
+    from src.config import get_aquatic_gain
+    aq = get_aquatic_gain(dam.id)
+    aquatic_gain_percent = aq.get("gain_percent", 0.0)
+    aquatic_gain_kwh = aq.get("gain_kwh", 0) * (retained_power / 20.0)
 
     # --- CO2 ---
     co2_avoided = production_y1 * const.J7
@@ -106,4 +119,6 @@ def compute_project(dam: DamProfile, const: EconomicConstants, inputs: ProjectIn
         tri=tri,
         roi=roi,
         payback=payback,
+        aquatic_gain_percent=aquatic_gain_percent,
+        aquatic_gain_kwh=aquatic_gain_kwh,
     )

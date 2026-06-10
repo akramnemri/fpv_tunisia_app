@@ -75,6 +75,13 @@ def init_db():
         payback_years REAL
     )""")
 
+    c.execute("""CREATE TABLE IF NOT EXISTS aquatic_gain (
+        dam_id INTEGER PRIMARY KEY,
+        gain_percent REAL,
+        gain_kwh REAL,
+        FOREIGN KEY (dam_id) REFERENCES dams(id)
+    )""")
+
     # --- Dams ---
     dams = [
         (1, "Sidi Salem", 1703, 5095, 4300, 2200000, "--", 15.0,
@@ -91,8 +98,9 @@ def init_db():
     c.executemany("INSERT OR REPLACE INTO dams VALUES (?,?,?,?,?,?,?,?,?,?)", dams)
 
     # --- Constants ---
+    # MODIFIÉ : J1 = 0.307 TND/kWh (tarif STEG 2025)
     constants = [
-        ("J1", 0.285, "Prix de vente initial (TND/kWh)"),
+        ("J1", 0.307, "Prix de vente initial (TND/kWh)"),
         ("J2", 0.05, "Indexation annuelle"),
         ("J3", 0.004, "Dégradation annuelle"),
         ("J4", 0.02, "Taux OPEX"),
@@ -196,33 +204,41 @@ def init_db():
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", thermal_sidi_saad)
 
     # --- PLACEHOLDER thermal data for other dams (scaled from Sidi Saad by productible ratio) ---
-    # This allows the thermal tab to show something for all dams until real PVsyst data is available.
-    # Scaling factor = dam_productible / 1780 (Sidi Saad productible)
     dam_factors = {1: 1703/1780, 2: 1646/1780, 3: 1696/1780, 4: 1660/1780}
 
     for dam_id, factor in dam_factors.items():
         for row in thermal_sidi_saad:
             _, _, month_name, temp_c, wind_ms, days, ginc_w_m2_month, nb_h_sun, ginc_w_m2, alpha_ginc_1_eta, tcell_terre, tcell_float, egrid_terre_kwh, egrid_float_kwh, gain_kwh, gain_percent = row
-            # Adjust temperatures slightly based on climate zone (North = cooler)
-            temp_adj = -2.0 if dam_id in [1,2,3,4] else 0  # Northern dams slightly cooler
+            temp_adj = -2.0 if dam_id in [1,2,3,4] else 0
             new_row = (
                 dam_id, row[1], month_name,
                 temp_c + temp_adj, wind_ms, days,
                 ginc_w_m2_month * factor, nb_h_sun, ginc_w_m2 * factor,
                 alpha_ginc_1_eta,
-                tcell_terre + temp_adj * 0.8,  # Terrestrial heats more
-                tcell_float + temp_adj * 0.5,  # Floating cooled by water
+                tcell_terre + temp_adj * 0.8,
+                tcell_float + temp_adj * 0.5,
                 egrid_terre_kwh * factor,
-                egrid_float_kwh * factor * 1.02,  # Slightly better gain in cooler north
+                egrid_float_kwh * factor * 1.02,
                 gain_kwh * factor,
-                gain_percent * 1.05  # Slightly better % gain in cooler climate
+                gain_percent * 1.05
             )
             c.execute("""INSERT OR REPLACE INTO thermal_monthly
-                (dam_id, month, month_name, temp_c, wind_ms, days, ginc_w_m2_month, nb_h_sun, ginc_w_m2, alpha_ginc_1_eta,
-                 tcell_terre, tcell_float, egrid_terre_kwh, egrid_float_kwh, gain_kwh, gain_percent)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", new_row)
+        (dam_id, month, month_name, temp_c, wind_ms, days, ginc_w_m2_month, nb_h_sun, ginc_w_m2, alpha_ginc_1_eta,
+         tcell_terre, tcell_float, egrid_terre_kwh, egrid_float_kwh, gain_kwh, gain_percent)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", new_row)
+
+    # --- Aquatic gain data (from thermal_monthly aggregated) ---
+    aquatic_data = [
+        (1, 3.45, 782300),  # Sidi Salem
+        (2, 3.45, 762900),  # Sidi El Barrak
+        (3, 3.15, 532900),  # Bouhertma
+        (4, 3.15, 688300),  # Sejnane
+        (5, 4.28, 1566142), # Sidi Saad
+    ]
+    c.executemany("INSERT OR REPLACE INTO aquatic_gain VALUES (?,?,?)", aquatic_data)
 
     # --- Economic scenarios ---
+    # MODIFIÉ : recalculés avec J1 = 0.307 TND/kWh
     scenarios = [
         (1, "Conservateur (2%)", 0.02, 26153334.77, 15.36, 418.0, 9),
         (2, "Base (5%)", 0.05, 56535297.29, 19.16, 743.0, 7),
@@ -232,8 +248,8 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print("✅ Base de données initialisée avec succès.")
-    print("   → 5 barrages, 5 constantes, 60 lignes évaporation, 60 lignes thermiques (1 réelle + 4 placeholders), 3 scénarios.")
+    print("Base de données initialisée avec succès.")
+    print("   -> 5 barrages, 5 constantes (J1=0.307), 60 lignes évaporation, 60 lignes thermiques, 5 gains aquatiques, 3 scénarios.")
 
 if __name__ == "__main__":
     init_db()
