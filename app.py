@@ -145,7 +145,7 @@ with tab_therm:
     else:
         dam_select_t = selected_dam
 
-    dam_id_t = dams_df[dams_df['name'] == dam_select_t]['id'].values[0]
+    dam_id_t = int(dams_df[dams_df['name'] == dam_select_t]['id'].values[0])
     thermal_tab.render(conn, dam_id_t, dam_select_t)
 
 # ─── TAB 4: Scenarios ──────────────────────
