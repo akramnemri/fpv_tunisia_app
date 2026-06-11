@@ -9,7 +9,7 @@ def render(conn, dam_id: int, dam_name: str):
 
     therm_df = load_thermal(conn, dam_id)
 
-    if therm_df.empty:
+    if therm_df is None or therm_df.empty:
         st.info(f"Données thermiques détaillées disponibles uniquement pour Sidi Saad (étude PVsyst de référence).\n"
                 f"Pour {dam_name}, les données seront ajoutées après simulation PVsyst.")
         return
