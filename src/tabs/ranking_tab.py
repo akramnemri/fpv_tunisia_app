@@ -38,4 +38,10 @@ def render(conn):
             "PR (sur 100)": s.pr_score,
             "Contrainte (sur 100)": s.constraint_score,
         } for s in scores]
-        st.dataframe(pd.DataFrame(detail).style.format("{:.1f}"))
+        st.dataframe(pd.DataFrame(detail).style.format({
+            "Production (sur 100)": "{:.1f}",
+            "Eau (sur 100)": "{:.1f}",
+            "Gain aquatique (sur 100)": "{:.1f}",
+            "PR (sur 100)": "{:.1f}",
+            "Contrainte (sur 100)": "{:.1f}",
+        }))

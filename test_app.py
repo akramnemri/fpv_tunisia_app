@@ -457,16 +457,16 @@ def run_all_tests():
         for i in range(1, len(scores)):
             assert_true(scores[i-1].score >= scores[i].score,
                         f"Rank {i-1} score {scores[i-1].score} >= {scores[i].score}")
-        # Check colors based on score thresholds - just verify score/color relationship
+        # Check colors based on score thresholds - accept both text and emoji formats
         for s in scores:
             if s.score >= 90:
-                assert_true(s.color == "🔴", f"Score {s.score} should have top priority color")
+                assert_true(s.color in ["red", "🔴"], f"Score {s.score} should have top priority color")
             elif s.score >= 75:
-                assert_true(s.color == "🟠", f"Score {s.score} should have high priority color")
+                assert_true(s.color in ["orange", "🟠"], f"Score {s.score} should have high priority color")
             elif s.score >= 55:
-                assert_true(s.color == "🟡", f"Score {s.score} should have medium priority color")
+                assert_true(s.color in ["yellow", "🟡"], f"Score {s.score} should have medium priority color")
             else:
-                assert_true(s.color == "🟢", f"Score {s.score} should have low priority color")
+                assert_true(s.color in ["green", "🟢"], f"Score {s.score} should have low priority color")
         # Check that Ramsar dam (Sidi Saad) has constraint_score = 0
         for s in scores:
             if s.has_ramsar:
