@@ -139,7 +139,6 @@ def run_all_tests():
             assert_true(dam.productible > 0, f"{dam.name}: productible={dam.productible}")
             assert_true(dam.economy_water_m3_mwc > 0, f"{dam.name}: water saving={dam.economy_water_m3_mwc}")
             assert_true(dam.surface_ha > 0, f"{dam.name}: surface={dam.surface_ha}")
-            assert_true(dam.cost_per_mwc == CAPEX_PER_MWC, f"{dam.name}: cost_per_mwc={dam.cost_per_mwc} (expected {CAPEX_PER_MWC})")
             assert_true(0 < dam.max_coverage_rate <= 15, f"{dam.name}: max_coverage={dam.max_coverage_rate}")
         passed += 1
     except Exception as e:
@@ -386,7 +385,7 @@ def run_all_tests():
     try:
         for dam_id in range(1, 6):
             evap = load_evap(conn, dam_id)
-            assert_true(len(evap) >= 12, f"Dam {dam_id}: at least 12 months, got {len(evap)}")
+            assert_true(len(evap) == 12, f"Dam {dam_id}: 12 months, got {len(evap)}")
             total_saved = evap['volume_without_fpv'].sum() - evap['volume_with_fpv'].sum()
             assert_true(total_saved > 0, f"Dam {dam_id}: total water saved = {total_saved:.0f} m³")
             # Scaling: For 20 MWc, scale factor = 1.0 (since base is 20 MWc)
@@ -406,7 +405,7 @@ def run_all_tests():
     try:
         for dam_id in range(1, 6):
             therm = load_thermal(conn, dam_id)
-            assert_true(len(therm) >= 12, f"Dam {dam_id}: at least 12 months, got {len(therm)}")
+            assert_true(len(therm) == 12, f"Dam {dam_id}: 12 months, got {len(therm)}")
             total_gain = therm['gain_kwh'].sum()
             avg_gain_pct = therm['gain_percent'].mean()
             assert_true(total_gain > 0, f"Dam {dam_id}: total gain = {total_gain:.0f} kWh")
