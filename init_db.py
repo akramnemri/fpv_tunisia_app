@@ -98,16 +98,16 @@ def init_db():
     c.executemany("INSERT OR REPLACE INTO dams VALUES (?,?,?,?,?,?,?,?,?,?)", dams)
 
 # --- Constants ---
-    # MODIFIÉ : J1 = 0.307 TND/kWh ; J7 = 0,476 tCO₂/MWh = 0,000476 tCO₂/kWh
+    # MODIFIÉ : J1 = 0.307 TND/kWh ; J7 = 476 kgCO₂/MWh ; J8 = 35.8 kgCO₂/MWh
     constants = [
         ("J1", 0.307, "Prix de vente initial (TND/kWh)"),
         ("J2", 0.05, "Indexation annuelle"),
-        ("J3", 0.004, "Dégradation annuelle"),
+        ("J3", 0.004, "Degradation annuelle"),
         ("J4", 0.02, "Taux OPEX"),
         ("J5", 0.10, "Taux actualisation"),
-        ("J6", 25, "Durée de vie (ans)"),
-        ("J7", 0.000476, "Facteur CO₂ évité (t/kWh) - réseau tunisien 0,476 tCO₂/MWh"),
-        ("J8", 0.0000358, "Facteur CO₂ FPV (t/kWh)"),
+        ("J6", 25, "Duree de vie (ans)"),
+        ("J7", 476.0, "Facteur CO2 evite (kg/MWh) - reseau tunisien 0,476 tCO2/MWh"),
+        ("J8", 35.8, "Facteur CO2 FPV (kg/MWh) - 0,0358 tCO2/MWh"),
     ]
     c.executemany("INSERT OR REPLACE INTO constants VALUES (?,?,?)", constants)
 

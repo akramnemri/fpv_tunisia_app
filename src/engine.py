@@ -113,9 +113,9 @@ def compute_project(dam: DamProfile, const: EconomicConstants, inputs: ProjectIn
     # ------------------------------------------------------------------
     # 8. CO₂
     # ------------------------------------------------------------------
-    co2_avoided = production_y1 * const.J7
-    co2_emitted = production_y1 * const.J8
-    co2_net = co2_avoided - co2_emitted
+    co2_avoided = (production_y1 / 1000) * const.J7          # MWh * kg/MWh = kg
+    co2_emitted = (production_y1 / 1000) * const.J8
+    co2_net = co2_avoided - co2_emitted                   # kg (already correct)
 
     # ------------------------------------------------------------------
     # 9. Équivalences environnementales  (PATCH 2025-06)

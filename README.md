@@ -129,7 +129,7 @@ The application follows a modular architecture:
 - OPEX rate: 2%
 - Discount rate: 10%
 - Project lifetime: 25 years
-- CO₂ avoided factor: 0.476 t/MWh (Tunisian grid factor)
+- CO₂ avoided factor: 0.476 t/MWh (Tunisian grid factor) = 476 kg/MWh
 
 ### Constraints
 - **AEP (Alimentation En Eau Potable)**: Drinking water supply - requires water quality studies

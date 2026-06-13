@@ -22,8 +22,8 @@ def render(conn, dam_id: int, dam_name: str):
     st.success(f"📈 **Gain annuel total : {total_gain:,.0f} kWh** (écart moyen +{avg_gain_pct:.2f}%)")
     
     # Équivalents écologiques du gain
-    co2_equiv = total_gain * 0.000445  # Facteur CO2 évité
-    st.info(f"🌱 Équivalent CO₂ évité grâce au gain : **{co2_equiv:.1f} tonnes/an**")
+    co2_equiv = total_gain * 0.476  # Facteur CO2 évité (t/MWh)
+    st.info(f"🌱 Équivalent CO₂ évité grâce au gain : **{co2_equiv:,.0f} tonnes/an**")
 
     with st.expander("📋 Données thermiques détaillées"):
         import pandas as pd

@@ -57,12 +57,14 @@ def get_aquatic_gain(dam_id: int) -> dict:
 # Classement prioritaire (rapport modifications)
 # ----------------------------------------------------------------------
 def _score_color(score: float) -> str:
-    if score >= 90:
+    if score >= 80:
         return "green"
-    elif score >= 75:
-        return "blue"
-    elif score >= 55:
+    elif score >= 65:
+        return "lightgreen"
+    elif score >= 50:
         return "yellow"
+    elif score >= 35:
+        return "orange"
     else:
         return "red"
 

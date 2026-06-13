@@ -122,8 +122,8 @@ def run_all_tests():
         assert_true(0.0 < const.J4 < 0.05, f"J4 = {const.J4}")
         assert_true(0.0 < const.J5 < 0.20, f"J5 = {const.J5}")
         assert_true(const.J6 == 25, f"J6 = {const.J6}")
-        assert_true(const.J7 > 0, f"J7 = {const.J7}")
-        assert_true(const.J8 > 0, f"J8 = {const.J8}")
+        assert_true(const.J7 == 476.0, f"J7 = {const.J7} (expected 476 kg/MWh)")
+        assert_true(abs(const.J8 - 35.8) < 0.1, f"J8 = {const.J8} (expected 35.8 kg/MWh)")
         passed += 1
     except Exception as e:
         print(f"  FAIL: {e}")
@@ -457,16 +457,18 @@ def run_all_tests():
         for i in range(1, len(scores)):
             assert_true(scores[i-1].score >= scores[i].score,
                         f"Rank {i-1} score {scores[i-1].score} >= {scores[i].score}")
-        # Check colors based on score thresholds - higher score = better color
+        # Check colors based on score thresholds - higher score = better (green), lower = worse (red)
         for s in scores:
-            if s.score >= 90:
-                assert_true(s.color == "green", f"Score {s.score} should have top priority color (green)")
-            elif s.score >= 75:
-                assert_true(s.color == "blue", f"Score {s.score} should have good priority color (blue)")
-            elif s.score >= 55:
+            if s.score >= 80:
+                assert_true(s.color == "green", f"Score {s.score} should have best priority color (green)")
+            elif s.score >= 65:
+                assert_true(s.color == "lightgreen", f"Score {s.score} should have good priority color (lightgreen)")
+            elif s.score >= 50:
                 assert_true(s.color == "yellow", f"Score {s.score} should have medium priority color (yellow)")
+            elif s.score >= 35:
+                assert_true(s.color == "orange", f"Score {s.score} should have low priority color (orange)")
             else:
-                assert_true(s.color == "red", f"Score {s.score} should have low priority color (red)")
+                assert_true(s.color == "red", f"Score {s.score} should have lowest priority color (red)")
         # Check that Ramsar dam (Sidi Saad) has constraint_score = 0
         for s in scores:
             if s.has_ramsar:
