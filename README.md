@@ -99,7 +99,7 @@ fpv_tunisia_app/
         ├── thermal_tab.py
         ├── scenarios_tab.py
         └── comparison_tab.py
-         └── ranking_tab.py
+│     └── ranking_tab.py
 ```
 
 ## Database Schema
@@ -129,7 +129,7 @@ The application follows a modular architecture:
 - OPEX rate: 2%
 - Discount rate: 10%
 - Project lifetime: 25 years
-- CO₂ avoided factor: 0.000445 t/kWh
+- CO₂ avoided factor: 0.476 t/MWh (Tunisian grid factor)
 
 ### Constraints
 - **AEP (Alimentation En Eau Potable)**: Drinking water supply - requires water quality studies
