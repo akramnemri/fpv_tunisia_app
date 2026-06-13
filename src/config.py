@@ -58,13 +58,13 @@ def get_aquatic_gain(dam_id: int) -> dict:
 # ----------------------------------------------------------------------
 def _score_color(score: float) -> str:
     if score >= 90:
-        return "red"
+        return "green"
     elif score >= 75:
-        return "orange"
+        return "blue"
     elif score >= 55:
         return "yellow"
     else:
-        return "green"
+        return "red"
 
 def _normalize(series: pd.Series) -> pd.Series:
     mn, mx = series.min(), series.max()

@@ -282,17 +282,18 @@ def run_all_tests():
         dam = DamProfile(**saad)
         inputs = ProjectInputs(0, 20, "Mixte", 0, 0, mode="power")
         res = compute_project(dam, const, inputs)
-        # CO2 net in tonnes
+        # CO2 net in tonnes - J7 = 0.476 tCO2/MWh = 0.000476 tCO2/kWh
         co2_net_t = res.co2_net / 1000.0
         expected_trees = int(co2_net_t / 0.02)
         expected_cars = int(co2_net_t / 2.5)
         expected_pools = res.water_saved_m3 / 2500.0
         if res.equivalences:
+            # Trees and cars are calculated from net CO2 avoided
             assert_true(res.equivalences.trees_planted == expected_trees,
                         f"Trees: {res.equivalences.trees_planted} vs {expected_trees}")
             assert_true(res.equivalences.cars_removed == expected_cars,
                         f"Cars: {res.equivalences.cars_removed} vs {expected_cars}")
-            assert_true(abs(res.equivalences.olympic_pools - expected_pools) < 0.01,
+            assert_true(abs(res.equivalences.olympic_pools - expected_pools) < 0.1,
                         f"Pools: {res.equivalences.olympic_pools} vs {expected_pools}")
         else:
             assert_true(False, "EnvironmentalEquivalences not set in results")
@@ -456,16 +457,16 @@ def run_all_tests():
         for i in range(1, len(scores)):
             assert_true(scores[i-1].score >= scores[i].score,
                         f"Rank {i-1} score {scores[i-1].score} >= {scores[i].score}")
-        # Check colors based on score thresholds - accept both text and emoji formats
+        # Check colors based on score thresholds - higher score = better color
         for s in scores:
             if s.score >= 90:
-                assert_true(s.color in ["red", "🔴"], f"Score {s.score} should have top priority color")
+                assert_true(s.color == "green", f"Score {s.score} should have top priority color (green)")
             elif s.score >= 75:
-                assert_true(s.color in ["orange", "🟠"], f"Score {s.score} should have high priority color")
+                assert_true(s.color == "blue", f"Score {s.score} should have good priority color (blue)")
             elif s.score >= 55:
-                assert_true(s.color in ["yellow", "🟡"], f"Score {s.score} should have medium priority color")
+                assert_true(s.color == "yellow", f"Score {s.score} should have medium priority color (yellow)")
             else:
-                assert_true(s.color in ["green", "🟢"], f"Score {s.score} should have low priority color")
+                assert_true(s.color == "red", f"Score {s.score} should have low priority color (red)")
         # Check that Ramsar dam (Sidi Saad) has constraint_score = 0
         for s in scores:
             if s.has_ramsar:

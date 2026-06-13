@@ -97,8 +97,8 @@ def init_db():
     ]
     c.executemany("INSERT OR REPLACE INTO dams VALUES (?,?,?,?,?,?,?,?,?,?)", dams)
 
-    # --- Constants ---
-    # MODIFIÉ : J1 = 0.307 TND/kWh (tarif STEG 2025)
+# --- Constants ---
+    # MODIFIÉ : J1 = 0.307 TND/kWh ; J7 = 0,476 tCO₂/MWh = 0,000476 tCO₂/kWh
     constants = [
         ("J1", 0.307, "Prix de vente initial (TND/kWh)"),
         ("J2", 0.05, "Indexation annuelle"),
@@ -106,7 +106,7 @@ def init_db():
         ("J4", 0.02, "Taux OPEX"),
         ("J5", 0.10, "Taux actualisation"),
         ("J6", 25, "Durée de vie (ans)"),
-        ("J7", 0.000445, "Facteur CO₂ évité (t/kWh)"),
+        ("J7", 0.000476, "Facteur CO₂ évité (t/kWh) - réseau tunisien 0,476 tCO₂/MWh"),
         ("J8", 0.0000358, "Facteur CO₂ FPV (t/kWh)"),
     ]
     c.executemany("INSERT OR REPLACE INTO constants VALUES (?,?,?)", constants)

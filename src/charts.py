@@ -12,10 +12,10 @@ from typing import List
 
 # Palette couleurs priorité (cohérente avec _score_color dans config.py)
 _COLOR_MAP = {
-    "red": "#e74c3c",
-    "orange": "#e67e22",
-    "yellow": "#f1c40f",
-    "green": "#2ecc71",
+    "green": "#27ae60",   # Excellent
+    "blue": "#3498db",    # Good
+    "yellow": "#f39c12",  # Medium
+    "red": "#e74c3c",     # Warning
 }
 
 
