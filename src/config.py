@@ -1,13 +1,18 @@
 """Configuration globale, accès base de données et classement des barrages."""
 import os
 import sqlite3
+import sys
 import pandas as pd
 import streamlit as st
 from typing import List
 
 from src.models import DamScore
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "dams.db")
+if getattr(sys, 'frozen', False):
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+DB_PATH = os.path.join(BASE_DIR, "data", "dams.db")
 
 # Tarif STEG 2025 obligatoire
 J1_STEG_2025 = 0.307

@@ -3,6 +3,15 @@ Architecture modulaire : config → models → engine → charts → tabs.
 """
 import streamlit as st
 import pandas as pd
+import os
+
+# Ensure database exists (for Streamlit Cloud deployment)
+if not os.path.exists(os.path.join(os.path.dirname(__file__), "data", "dams.db")):
+    try:
+        import init_db
+        init_db.init_db()
+    except Exception:
+        pass
 
 from src.config import get_connection, load_constants, load_dams
 from src.models import DamProfile, EconomicConstants, ProjectInputs
