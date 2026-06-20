@@ -1,8 +1,20 @@
 """Onglet Classement prioritaire des barrages (score + couleurs)."""
 import streamlit as st
 import pandas as pd
-from src.config import compute_dam_scores, scores_to_dataframe, load_dams, get_aquatic_gain
+from src.config import compute_dam_scores, scores_to_dataframe, load_dams, get_aquatic_gain, load_dam_evaporation_from_excel
 from src.charts import ranking_chart
+
+def load_all_dam_data_from_excel() -> dict:
+    """Load all dam data from current study Excel file."""
+    dam_names = ["Sidi Saad", "Sidi Salem", "Sidi El Barrak", "Bouhertma", "Sejnane"]
+    dam_totals = {}
+    
+    for dam_name in dam_names:
+        result = load_dam_evaporation_from_excel(dam_name)
+        if 'error' not in result:
+            dam_totals[dam_name] = result
+    
+    return dam_totals
 
 def render(conn):
     st.subheader("🏆 Classement prioritaire des barrages pour l'installation FPV")
@@ -18,8 +30,11 @@ def render(conn):
     # Get user-selected power or default to 20 MWc
     power_mwc = st.session_state.get('power_mwc', 20.0)
     
+    # Try to load from Excel, fallback to DB
+    dam_totals = load_all_dam_data_from_excel()
+    
     with st.spinner("Calcul du classement en cours..."):
-        scores = compute_dam_scores(conn, power_mwc=power_mwc)
+        scores = compute_dam_scores(conn, power_mwc=power_mwc, dam_totals=dam_totals if dam_totals else None)
         df_scores = scores_to_dataframe(scores)
 
     fig = ranking_chart(df_scores)

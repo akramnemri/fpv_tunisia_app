@@ -66,13 +66,12 @@ def load_dam_evaporation_from_excel(dam_name: str) -> dict:
     excel_path = os.path.join(os.path.dirname(__file__), "..", "fichier excel calcul evaporation (2).xlsx")
     
     if not os.path.exists(excel_path):
-        st.warning(f"Current study Excel not found at {excel_path}")
-        return {}
+        st.error(f"Fichier Excel 'fichier excel calcul evaporation (2).xlsx' introuvable")
+        return {"error": "Excel file not found"}
     
     try:
         xls = pd.ExcelFile(excel_path, engine='openpyxl')
         
-        # Map dam names to sheet suffixes
         sheet_map = {
             "Sidi Saad": "Barrage sidi saad ",
             "Sidi Salem": "Sidi salem ",
@@ -83,29 +82,45 @@ def load_dam_evaporation_from_excel(dam_name: str) -> dict:
         
         sheet = sheet_map.get(dam_name)
         if not sheet:
-            return {}
+            return {"error": f"Sheet not found for {dam_name}"}
         
-        df = pd.read_excel(xls, sheet, engine='openpyxl')
+        df = pd.read_excel(xls, sheet, engine='openpyxl', header=None)
         
-        # Look for total économies value
-        total_saved = 0
-        for idx, row in df.iterrows():
-            row_vals = [str(v).lower() for v in row.values if pd.notna(v)]
-            if any('total' in v for v in row_vals):
-                # Next row should have the total
-                continue
-            # Sum the économie values (column 14 in original data)
-            if len(row) >= 14:
-                try:
-                    saved = float(row.iloc[12]) - float(row.iloc[13])  # volume_without - volume_with
-                    total_saved += saved
-                except:
-                    pass
+        # The Excel shows "Total économies = X" in the sheet
+        # Look for the pattern in the text content
+        total_saved = None
         
-        return {"total_economie_m3_per_20mwc": total_saved}
+        # Parse all values in the dataframe looking for Total économies
+        for i in range(len(df)):
+            row = df.iloc[i]
+            for j, val in enumerate(row.values):
+                val_str = str(val) if pd.notna(val) else ""
+                if 'Total économies' in val_str:
+                    # Look for the number in nearby cells
+                    for dj in range(1, 4):
+                        if j + dj < len(row):
+                            next_val = row.iloc[j + dj]
+                            if pd.notna(next_val):
+                                # Extract number from string like "117 253 m³" or "101 898.93"
+                                num_str = str(next_val).replace(' ', '').replace('m³', '').replace(',', '.')
+                                try:
+                                    total_saved = float(num_str)
+                                    break
+                                except:
+                                    pass
+                    break
+            if total_saved is not None:
+                break
+        
+        if total_saved is None:
+            st.error(f"Impossible de trouver les données 'Total économies' pour {dam_name}")
+            return {"error": "Total not found"}
+        
+        # The totals in Excel are for 20 MWc - convert to per MWc
+        return {"economie_m3_per_mwc": total_saved / 20.0}
     except Exception as e:
-        st.error(f"Error loading Excel data: {e}")
-        return {}
+        st.error(f"Erreur lecture Excel pour {dam_name}: {e}")
+        return {"error": str(e)}
 
 # ----------------------------------------------------------------------
 # Classement prioritaire (rapport modifications)
@@ -128,26 +143,67 @@ def _normalize(series: pd.Series) -> pd.Series:
         return pd.Series([50.0] * len(series), index=series.index)
     return (series - mn) / (mx - mn) * 100
 
-def compute_dam_scores(conn, power_mwc: float = 20.0) -> List[DamScore]:
-    dams = load_dams(conn)
+def compute_dam_scores(conn, power_mwc: float = 20.0, dam_totals: dict = None) -> List[DamScore]:
+    """
+    Compute dam scores based on multi-criteria analysis.
+    If dam_totals is provided (from Excel), use those instead of database values.
+    """
+    # Hardcoded dam productible values (PV characteristics)
+    dam_productible = {
+        1: 1703,  # Sidi Salem
+        2: 1646,  # Sidi El Barrak
+        3: 1696,  # Bouhertma
+        4: 1660,  # Sejnane
+        5: 1780,  # Sidi Saad
+    }
+    
+    # Aquatic gains per dam (from thermal analysis)
+    dam_aquatic_gain = {
+        1: 3.45,  # Sidi Salem
+        2: 3.45,  # Sidi El Barrak
+        3: 3.15,  # Bouhertma
+        4: 3.15,  # Sejnane
+        5: 4.28,  # Sidi Saad
+    }
+    
+    # Dam constraints (name, is_ramsar, max_coverage_rate)
+    dam_constraints = {
+        1: ("Sidi Salem", False, 15.0),
+        2: ("Sidi El Barrak", False, 15.0),
+        3: ("Bouhertma", False, 15.0),
+        4: ("Sejnane", False, 5.0),  # AEP, not Ramsar
+        5: ("Sidi Saad", True, 5.0),  # Ramsar site
+    }
+    
     rows = []
-    for _, dam in dams.iterrows():
-        dam_id = int(dam['id'])
-        production_gwh = float(dam['productible']) * power_mwc / 1000.0   # GWh
-        water_m3 = float(dam['economy_water_m3_mwc']) * power_mwc
-        aq = get_aquatic_gain(dam_id)
-        aquatic_pct = float(aq.get('gain_percent', 0.0))
-        pr_raw = float(dam['productible'])  # proxy PR
-        has_ramsar = 'ramsar' in str(dam.get('constraint_type', '')).lower()
+    for dam_id in sorted(dam_constraints.keys()):
+        dam_name, is_ramsar, _ = dam_constraints[dam_id]
+        
+        # Use Excel totals if provided, otherwise fallback to DB
+        if dam_totals and dam_name in dam_totals:
+            water_per_mwc = dam_totals[dam_name].get("economie_m3_per_mwc", 0)
+        else:
+            # Fallback to DB values
+            conn_local = conn or get_connection()
+            dam = load_dams(conn_local)[load_dams(conn_local)['id'] == dam_id].iloc[0]
+            water_per_mwc = float(dam['economy_water_m3_mwc'])
+        
+        aquatic_pct = dam_aquatic_gain[dam_id]
+        
+        production_gwh = dam_productible[dam_id] * power_mwc / 1000.0
+        water_m3 = water_per_mwc * power_mwc
+        pr_raw = dam_productible[dam_id]
+        
         rows.append({
             'dam_id': dam_id,
-            'dam_name': dam['name'],
+            'dam_name': dam_name,
             'production_gwh': production_gwh,
             'water_m3': water_m3,
             'aquatic_pct': aquatic_pct,
             'pr_raw': pr_raw,
-            'has_ramsar': has_ramsar,
+            'has_ramsar': is_ramsar,
         })
+    
     df = pd.DataFrame(rows)
     df['prod_norm'] = _normalize(df['production_gwh'])
     df['water_norm'] = _normalize(df['water_m3'])
