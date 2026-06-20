@@ -1,7 +1,7 @@
 """Onglet Classement prioritaire des barrages (score + couleurs)."""
 import streamlit as st
 import pandas as pd
-from src.config import compute_dam_scores, scores_to_dataframe
+from src.config import compute_dam_scores, scores_to_dataframe, load_dams, get_aquatic_gain
 from src.charts import ranking_chart
 
 def render(conn):
@@ -15,8 +15,11 @@ def render(conn):
     - Contrainte environnementale : 10% (pénalité si site Ramsar)
     """)
 
+    # Get user-selected power or default to 20 MWc
+    power_mwc = st.session_state.get('power_mwc', 20.0)
+    
     with st.spinner("Calcul du classement en cours..."):
-        scores = compute_dam_scores(conn, power_mwc=20.0)
+        scores = compute_dam_scores(conn, power_mwc=power_mwc)
         df_scores = scores_to_dataframe(scores)
 
     fig = ranking_chart(df_scores)

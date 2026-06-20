@@ -110,6 +110,10 @@ inputs = ProjectInputs(
     mode=inputs_mode,
 )
 
+# Store power in session state for ranking tab
+st.session_state['inputs'] = inputs
+st.session_state['power_mwc'] = inputs.desired_power or DEFAULT_POWER
+
 # ───────────────────────────────────────────
 # MAIN TABS
 # ───────────────────────────────────────────
