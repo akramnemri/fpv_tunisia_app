@@ -4,7 +4,7 @@ import sqlite3
 import sys
 import pandas as pd
 import streamlit as st
-from typing import List
+from typing import List, Optional
 
 from src.models import DamScore
 
@@ -13,6 +13,9 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "data", "dams.db")
+
+# Path to current study Excel file
+CURRENT_STUDY_EXCEL = os.path.join(BASE_DIR, "..", "fichier excel calcul evaporation (2).xlsx")
 
 # Tarif STEG 2025 obligatoire
 J1_STEG_2025 = 0.307
@@ -57,6 +60,52 @@ def get_aquatic_gain(dam_id: int) -> dict:
     if row:
         return {"gain_percent": row[0], "gain_kwh": row[1]}
     return {"gain_percent": 0.0, "gain_kwh": 0}
+
+def load_dam_evaporation_from_excel(dam_name: str) -> dict:
+    """Load dam evaporation totals from current study Excel file (fichier excel calcul evaporation (2))."""
+    excel_path = os.path.join(os.path.dirname(__file__), "..", "fichier excel calcul evaporation (2).xlsx")
+    
+    if not os.path.exists(excel_path):
+        st.warning(f"Current study Excel not found at {excel_path}")
+        return {}
+    
+    try:
+        xls = pd.ExcelFile(excel_path, engine='openpyxl')
+        
+        # Map dam names to sheet suffixes
+        sheet_map = {
+            "Sidi Saad": "Barrage sidi saad ",
+            "Sidi Salem": "Sidi salem ",
+            "Sidi El Barrak": "sidi Barrak",
+            "Bouhertma": "Bouhertma",
+            "Sejnane": "Sejnane",
+        }
+        
+        sheet = sheet_map.get(dam_name)
+        if not sheet:
+            return {}
+        
+        df = pd.read_excel(xls, sheet, engine='openpyxl')
+        
+        # Look for total économies value
+        total_saved = 0
+        for idx, row in df.iterrows():
+            row_vals = [str(v).lower() for v in row.values if pd.notna(v)]
+            if any('total' in v for v in row_vals):
+                # Next row should have the total
+                continue
+            # Sum the économie values (column 14 in original data)
+            if len(row) >= 14:
+                try:
+                    saved = float(row.iloc[12]) - float(row.iloc[13])  # volume_without - volume_with
+                    total_saved += saved
+                except:
+                    pass
+        
+        return {"total_economie_m3_per_20mwc": total_saved}
+    except Exception as e:
+        st.error(f"Error loading Excel data: {e}")
+        return {}
 
 # ----------------------------------------------------------------------
 # Classement prioritaire (rapport modifications)
