@@ -11,7 +11,7 @@ def load_all_dam_data_from_excel() -> dict:
     
     for dam_name in dam_names:
         result = load_dam_evaporation_from_excel(dam_name)
-        if 'error' not in result:
+        if result:  # Has data (economie_m3_per_mwc key exists)
             dam_totals[dam_name] = result
     
     return dam_totals

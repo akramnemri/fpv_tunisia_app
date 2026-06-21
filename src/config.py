@@ -66,11 +66,12 @@ def load_dam_evaporation_from_excel(dam_name: str) -> dict:
     excel_path = os.path.join(os.path.dirname(__file__), "..", "fichier excel calcul evaporation (2).xlsx")
     
     if not os.path.exists(excel_path):
-        st.error(f"Fichier Excel 'fichier excel calcul evaporation (2).xlsx' introuvable")
-        return {"error": "Excel file not found"}
+        # Return empty to use DB values as fallback
+        return {}
     
     try:
-        xls = pd.ExcelFile(excel_path, engine='openpyxl')
+        from openpyxl import load_workbook
+        wb = load_workbook(excel_path, read_only=True)
         
         sheet_map = {
             "Sidi Saad": "Barrage sidi saad ",
@@ -80,47 +81,44 @@ def load_dam_evaporation_from_excel(dam_name: str) -> dict:
             "Sejnane": "Sejnane",
         }
         
-        sheet = sheet_map.get(dam_name)
-        if not sheet:
-            return {"error": f"Sheet not found for {dam_name}"}
+        sheet_name = sheet_map.get(dam_name)
+        if not sheet_name or sheet_name not in wb.sheetnames:
+            return {}
         
-        df = pd.read_excel(xls, sheet, engine='openpyxl', header=None)
+        ws = wb[sheet_name]
         
-        # The Excel shows "Total économies = X" in the sheet
-        # Look for the pattern in the text content
+        # Look for "Total économies" in the sheet
         total_saved = None
-        
-        # Parse all values in the dataframe looking for Total économies
-        for i in range(len(df)):
-            row = df.iloc[i]
-            for j, val in enumerate(row.values):
-                val_str = str(val) if pd.notna(val) else ""
-                if 'Total économies' in val_str:
-                    # Look for the number in nearby cells
-                    for dj in range(1, 4):
-                        if j + dj < len(row):
-                            next_val = row.iloc[j + dj]
-                            if pd.notna(next_val):
-                                # Extract number from string like "117 253 m³" or "101 898.93"
-                                num_str = str(next_val).replace(' ', '').replace('m³', '').replace(',', '.')
-                                try:
-                                    total_saved = float(num_str)
-                                    break
-                                except:
-                                    pass
+        for row in ws.iter_rows(values_only=True):
+            for val in row:
+                if val and 'Total économies' in str(val):
+                    # Look for number in next cells
+                    idx = list(row).index(val)
+                    for j in range(idx + 1, min(idx + 4, len(row))):
+                        next_val = row[j]
+                        if next_val:
+                            num_str = str(next_val).replace(' ', '').replace('m³', '').replace(',', '.')
+                            try:
+                                total_saved = float(num_str)
+                            except:
+                                pass
                     break
             if total_saved is not None:
                 break
         
+        wb.close()
+        
         if total_saved is None:
-            st.error(f"Impossible de trouver les données 'Total économies' pour {dam_name}")
-            return {"error": "Total not found"}
+            return {}
         
         # The totals in Excel are for 20 MWc - convert to per MWc
         return {"economie_m3_per_mwc": total_saved / 20.0}
+    except ImportError:
+        # openpyxl not available - use DB values as fallback
+        return {}
     except Exception as e:
-        st.error(f"Erreur lecture Excel pour {dam_name}: {e}")
-        return {"error": str(e)}
+        # Other errors - use DB values as fallback
+        return {}
 
 # ----------------------------------------------------------------------
 # Classement prioritaire (rapport modifications)
