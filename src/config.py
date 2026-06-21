@@ -157,13 +157,13 @@ def compute_dam_scores(conn, power_mwc: float = 20.0, dam_totals: dict = None) -
         5: 1780,  # Sidi Saad
     }
     
-    # Aquatic gains per dam (from thermal analysis)
+    # Aquatic gains per dam (average gain_percent from monthly values)
     dam_aquatic_gain = {
-        1: 3.45,  # Sidi Salem
-        2: 3.45,  # Sidi El Barrak
-        3: 3.15,  # Bouhertma
-        4: 3.15,  # Sejnane
-        5: 4.28,  # Sidi Saad
+        1: 6.15,  # Sidi Salem
+        2: 4.82,  # Sidi El Barrak
+        3: 4.78,  # Bouhertma
+        4: 4.75,  # Sejnane
+        5: 4.56,  # Sidi Saad
     }
     
     # Dam constraints (name, is_ramsar, max_coverage_rate)
