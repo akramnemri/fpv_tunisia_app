@@ -63,62 +63,9 @@ def get_aquatic_gain(dam_id: int) -> dict:
 
 def load_dam_evaporation_from_excel(dam_name: str) -> dict:
     """Load dam evaporation totals from current study Excel file (fichier excel calcul evaporation (2))."""
-    excel_path = os.path.join(os.path.dirname(__file__), "..", "fichier excel calcul evaporation (2).xlsx")
-    
-    if not os.path.exists(excel_path):
-        # Return empty to use DB values as fallback
-        return {}
-    
-    try:
-        from openpyxl import load_workbook
-        wb = load_workbook(excel_path, read_only=True)
-        
-        sheet_map = {
-            "Sidi Saad": "Barrage sidi saad ",
-            "Sidi Salem": "Sidi salem ",
-            "Sidi El Barrak": "sidi Barrak",
-            "Bouhertma": "Bouhertma",
-            "Sejnane": "Sejnane",
-        }
-        
-        sheet_name = sheet_map.get(dam_name)
-        if not sheet_name or sheet_name not in wb.sheetnames:
-            return {}
-        
-        ws = wb[sheet_name]
-        
-        # Look for "Total économies" in the sheet
-        total_saved = None
-        for row in ws.iter_rows(values_only=True):
-            for val in row:
-                if val and 'Total économies' in str(val):
-                    # Look for number in next cells
-                    idx = list(row).index(val)
-                    for j in range(idx + 1, min(idx + 4, len(row))):
-                        next_val = row[j]
-                        if next_val:
-                            num_str = str(next_val).replace(' ', '').replace('m³', '').replace(',', '.')
-                            try:
-                                total_saved = float(num_str)
-                            except:
-                                pass
-                    break
-            if total_saved is not None:
-                break
-        
-        wb.close()
-        
-        if total_saved is None:
-            return {}
-        
-        # The totals in Excel are for 20 MWc - convert to per MWc
-        return {"economie_m3_per_mwc": total_saved / 20.0}
-    except ImportError:
-        # openpyxl not available - use DB values as fallback
-        return {}
-    except Exception as e:
-        # Other errors - use DB values as fallback
-        return {}
+    # Note: Water values in DB already match Excel current study values
+    # This function is kept for future use but returns empty to use DB fallback
+    return {}
 
 # ----------------------------------------------------------------------
 # Classement prioritaire (rapport modifications)
