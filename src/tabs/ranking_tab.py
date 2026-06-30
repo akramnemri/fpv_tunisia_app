@@ -18,15 +18,45 @@ def load_all_dam_data_from_excel() -> dict:
 
 def render(conn):
     st.subheader("🏆 Classement prioritaire des barrages pour l'installation FPV")
+    
+    # Weight configuration
+    st.markdown("---")
+    st.subheader("⚖️ Pondérations personnalisées")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        w_prod = st.slider("Production (GWh/an)", 0, 100, 30, key="w_prod")
+        w_water = st.slider("Économie d'eau (m³/an)", 0, 100, 25, key="w_water")
+    with col2:
+        w_aquatic = st.slider("Gain aquatique (%)", 0, 100, 20, key="w_aquatic")
+        w_pr = st.slider("Performance Ratio", 0, 100, 15, key="w_pr")
+    with col3:
+        w_constraint = st.slider("Contrainte environnementale", 0, 100, 10, key="w_constraint")
+    
+    # Validate and normalize weights
+    total_weight = w_prod + w_water + w_aquatic + w_pr + w_constraint
+    if total_weight != 100:
+        st.warning(f"⚠️ Total pondérations: **{total_weight}%** (devrait être 100%)")
+        weights = None
+    else:
+        weights = {
+            'production': w_prod / 100.0,
+            'water': w_water / 100.0,
+            'aquatic': w_aquatic / 100.0,
+            'pr': w_pr / 100.0,
+            'constraint': w_constraint / 100.0,
+        }
+    
+    # Display criterion descriptions
     st.markdown("""
-    **Critères et pondérations :**
-    - Production annuelle : 30%
-    - Économie d'eau : 25%
-    - Gain aquatique (flottant) : 20%
-    - Performance Ratio (PR) : 15%
-    - Contrainte environnementale : 10% (pénalité si site Ramsar)
+    **Critères :**
+    - Production annuelle : kWh/kWc
+    - Économie d'eau : m³ économisés par MWc installé
+    - Gain aquatique (flottant) : pourcentage d'énergie supplémentaire
+    - Performance Ratio (PR) : efficacité énergétique
+    - Contrainte environnementale : pénalité si site Ramsar (Sidi Saad)
     """)
-
+    
     # Get user-selected power or default to 20 MWc
     power_mwc = st.session_state.get('power_mwc', 20.0)
     
@@ -34,7 +64,7 @@ def render(conn):
     dam_totals = load_all_dam_data_from_excel()
     
     with st.spinner("Calcul du classement en cours..."):
-        scores = compute_dam_scores(conn, power_mwc=power_mwc, dam_totals=dam_totals if dam_totals else None)
+        scores = compute_dam_scores(conn, power_mwc=power_mwc, dam_totals=dam_totals if dam_totals else None, weights=weights)
         df_scores = scores_to_dataframe(scores)
 
     fig = ranking_chart(df_scores)

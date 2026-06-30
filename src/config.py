@@ -88,11 +88,19 @@ def _normalize(series: pd.Series) -> pd.Series:
         return pd.Series([50.0] * len(series), index=series.index)
     return (series - mn) / (mx - mn) * 100
 
-def compute_dam_scores(conn, power_mwc: float = 20.0, dam_totals: dict = None) -> List[DamScore]:
+def compute_dam_scores(conn, power_mwc: float = 20.0, dam_totals: dict = None, weights: dict = None) -> List[DamScore]:
     """
     Compute dam scores based on multi-criteria analysis.
     If dam_totals is provided (from Excel), use those instead of database values.
+    If weights is provided, use those instead of default weights.
     """
+    weights = weights or {
+        'production': 0.30,
+        'water': 0.25,
+        'aquatic': 0.20,
+        'pr': 0.15,
+        'constraint': 0.10,
+    }
     # Hardcoded dam productible values (PV characteristics)
     dam_productible = {
         1: 1703,  # Sidi Salem
@@ -156,11 +164,11 @@ def compute_dam_scores(conn, power_mwc: float = 20.0, dam_totals: dict = None) -
     df['pr_norm'] = _normalize(df['pr_raw'])
     df['constraint_norm'] = df['has_ramsar'].apply(lambda r: 0.0 if r else 100.0)
 
-    df['score'] = (df['prod_norm'] * 0.30 +
-                   df['water_norm'] * 0.25 +
-                   df['aquatic_norm'] * 0.20 +
-                   df['pr_norm'] * 0.15 +
-                   df['constraint_norm'] * 0.10)
+    df['score'] = (df['prod_norm'] * weights['production'] +
+                   df['water_norm'] * weights['water'] +
+                   df['aquatic_norm'] * weights['aquatic'] +
+                   df['pr_norm'] * weights['pr'] +
+                   df['constraint_norm'] * weights['constraint'])
 
     df = df.sort_values('score', ascending=False).reset_index(drop=True)
 

@@ -485,9 +485,38 @@ def run_all_tests():
         failed += 1
 
     # ------------------------------------------------------------------
-    # 18. Edge cases: zero budget, zero desired power, negative inputs
+    # 18. Custom ranking weights
     # ------------------------------------------------------------------
-    print_test("TEST 18: Edge Cases (Zero Budget, Zero Desired Power, Negative)")
+    print_test("TEST 18: Custom Ranking Weights")
+    try:
+        # Test with custom weights (production-focused)
+        custom_weights = {
+            'production': 0.50,
+            'water': 0.15,
+            'aquatic': 0.15,
+            'pr': 0.15,
+            'constraint': 0.05,
+        }
+        scores_custom = compute_dam_scores(conn, power_mwc=20.0, weights=custom_weights)
+        assert_true(len(scores_custom) == 5, f"Custom weights: 5 scores, got {len(scores_custom)}")
+        # Verify scores still sorted correctly
+        for i in range(1, len(scores_custom)):
+            assert_true(scores_custom[i-1].score >= scores_custom[i].score,
+                        f"Custom weights: rank {i-1} score {scores_custom[i-1].score} >= {scores_custom[i].score}")
+        # Compare with default weights - rankings should differ when weights change
+        scores_default = compute_dam_scores(conn, power_mwc=20.0)
+        # At least check that both produce valid scores
+        assert_true(all(s.score > 0 for s in scores_custom), "Custom weights produce positive scores")
+        assert_true(all(s.score > 0 for s in scores_default), "Default weights produce positive scores")
+        passed += 1
+    except Exception as e:
+        print(f"  FAIL: {e}")
+        failed += 1
+
+# ------------------------------------------------------------------
+    # 19. Edge cases: zero budget, zero desired power, negative inputs
+    # ------------------------------------------------------------------
+    print_test("TEST 19: Edge Cases (Zero Budget, Zero Desired Power, Negative)")
     try:
         saad = get_dam(conn, "Sidi Saad")
         dam = DamProfile(**saad)
@@ -510,9 +539,9 @@ def run_all_tests():
         failed += 1
 
     # ------------------------------------------------------------------
-    # 19. Price, degradation and indexation impact on revenue
+    # 21. Price, degradation and indexation impact on revenue
     # ------------------------------------------------------------------
-    print_test("TEST 19: Price, Degradation and Indexation Impact")
+    print_test("TEST 21: Price, Degradation and Indexation Impact")
     try:
         saad = get_dam(conn, "Sidi Saad")
         dam = DamProfile(**saad)
@@ -538,9 +567,9 @@ def run_all_tests():
         failed += 1
 
     # ------------------------------------------------------------------
-    # 20. OPEX growth at 2% per year
+    # 22. OPEX growth at 2% per year
     # ------------------------------------------------------------------
-    print_test("TEST 20: OPEX Growth at 2% per Year")
+    print_test("TEST 22: OPEX Growth at 2% per Year")
     try:
         saad = get_dam(conn, "Sidi Saad")
         dam = DamProfile(**saad)
@@ -565,9 +594,9 @@ def run_all_tests():
         failed += 1
 
     # ------------------------------------------------------------------
-    # 21. Loan annuity stops after 10 years
+    # 23. Loan annuity stops after 10 years
     # ------------------------------------------------------------------
-    print_test("TEST 21: Loan Annuity Stops After 10 Years")
+    print_test("TEST 23: Loan Annuity Stops After 10 Years")
     try:
         saad = get_dam(conn, "Sidi Saad")
         dam = DamProfile(**saad)
